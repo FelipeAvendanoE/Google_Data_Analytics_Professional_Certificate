@@ -6,7 +6,7 @@ El proyecto consiste en analizar un caso de estudio de una empresa que ofrece el
 
 #### Escenario
 
-Formamos parte del equipo de marketing de Cyclistic, empresa ubicada en Chicago y según el director de marketing, el futuro de la empresa depende de maximizar el número de membresías anuales. Para ello, nos solicitan analizar los datos para entender en que se diferencian los miembros anuales de los ocasionales.
+Formamos parte del equipo de marketing de Cyclistic, empresa ubicada en Chicago y según el director de marketing, el futuro de la empresa depende de maximizar el número de membresías anuales. Para ello, nos solicitan analizar los datos  de los últimos doce meses (05-2021 hasta 04-2022) para entender en que se diferencian los miembros anuales de los ocasionales. Los datos provienen de https://divvy-tripdata.s3.amazonaws.com/index.html
 
 #### Datos de interés
 
