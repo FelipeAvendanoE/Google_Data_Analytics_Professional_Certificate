@@ -197,10 +197,10 @@ ggplot(data = divvy_clean) +
   geom_bar(mapping = aes(x = month, y = duration_min, fill = member_casual),
            stat = "summary", fun = "mean", position = "dodge" ) +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = "Viajes por mes y usuario",
-       subtitle = "Número de viajes por mes y por tipo de usuario",
+  labs(title = "Duración promedio de Viajes por mes y usuario",
+       subtitle = "Duración promedio de viajes por mes y por tipo de usuario",
        x = "Mes",
-       y = "Número de viajes",
+       y = "Duración promedio del viaje (min)",
        fill="Tipo de miembro"
   )
 
@@ -208,10 +208,10 @@ ggplot(data = divvy_clean) +
   geom_bar(mapping = aes(x = month, y = duration_min, fill = member_casual),
            stat = "summary", fun = "sum",position = "dodge" ) +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = "Viajes por mes y usuario",
-       subtitle = "Número de viajes por mes y por tipo de usuario",
+  labs(title = "Duración total de Viajes por mes y usuario",
+       subtitle = "Duración total de viajes por mes y por tipo de usuario",
        x = "Mes",
-       y = "Número de viajes",
+       y = "Duración total de viaje (min)",
        fill="Tipo de miembro"
   )
 
@@ -231,10 +231,10 @@ ggplot(data = divvy_clean) +
   geom_bar(mapping = aes(x = week_day, y = duration_min, fill = member_casual),
            stat = "summary", fun = "mean", position = "dodge") +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = "Viajes por día y usuario",
-       subtitle = "Número de viajes por día y por tipo de usuario",
+  labs(title = "Duración promedio de viajes por día y usuario",
+       subtitle = "Duración promedio de viajes por día y por tipo de usuario",
        x = "Día de la semana",
-       y = "Número de viajes",
+       y = "Duración promedio (min)",
        fill="Tipo de miembro"
   )
 
@@ -243,10 +243,10 @@ ggplot(data = divvy_clean) +
   geom_bar(mapping = aes(x = week_day, y = duration_min, fill = member_casual),
            stat = "summary", fun = "sum", position = "dodge") +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = "Viajes por día y usuario",
-       subtitle = "Número de viajes por día y por tipo de usuario",
+  labs(title = "Duración total de Viajes por día y usuario",
+       subtitle = "Duración total de viajes por día y por tipo de usuario",
        x = "Día de la semana",
-       y = "Número de viajes",
+       y = "Duración total de viajes (min)",
        fill="Tipo de miembro"
   )
 
@@ -267,10 +267,10 @@ ggplot(data = divvy_clean) +
   geom_bar(mapping = aes(x = hour, y = duration_min, fill = member_casual),
            stat = "summary", fun = "mean", position = "dodge" ) +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = "Viajes por hora y usuario",
-       subtitle = "Número de viajes por hora y por tipo de usuario",
+  labs(title = "Duración promedio de viajes por hora y usuario",
+       subtitle = "Duración promedio de viajes por hora y por tipo de usuario",
        x = "Hora del día",
-       y = "Número de viajes",
+       y = "Duración promedio (min)",
        fill="Tipo de miembro"
        )
 
@@ -278,10 +278,10 @@ ggplot(data = divvy_clean) +
   geom_bar(mapping = aes(x = hour, y = duration_min, fill = member_casual),
            stat = "summary", fun = "sum", position = "dodge" ) +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = "Viajes por hora y usuario",
-       subtitle = "Número de viajes por hora y por tipo de usuario",
+  labs(title = "Duración total de viajes por hora y usuario",
+       subtitle = "Duración total de viajes por hora y por tipo de usuario",
        x = "Hora del día",
-       y = "Número de viajes",
+       y = "Duración total (min)",
        fill="Tipo de miembro"
   )
 
@@ -291,9 +291,9 @@ ggplot(data = divvy_clean) +
            position = "dodge") +
   coord_cartesian(xlim = c(0, 50)) +
   scale_y_continuous(labels = scales::comma) +
-  labs(title = "Duración del viaje",
-       subtitle = "Duración del viaje por tipo de usuario",
-       x = "Duración en min",
+  labs(title = "Viajes según su duración",
+       subtitle = "Cantidad de viajes por su duración y tipo de usuario",
+       x = "Duración (min)",
        y = "Número de viajes",
        fill="Tipo de miembro"
        )
