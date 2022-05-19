@@ -15,3 +15,10 @@ Formamos parte del equipo de marketing de Cyclistic, empresa ubicada en Chicago 
 - Cerca del 30% de los usuarios utiliza las bicicletas para ir al trabajo
 - La estrategia actual de la empresa consiste en generar conocimiento de la marca y abarcar a segmentos masivos de clientes. Para ello ofrecen flexibilidad en sus precios. Se puede optar por un pase anual, uno diario y otro valido solo por un viaje.
 - Los miembros anuales significan mayores ingresos para la empresa, por lo cual se busca convertir a los miembros ocasionales en anuales.
+
+#### Análisis
+
+Para revisar el análisis, favor acceder al archivo "Caso de Estudio Cyclistic.R"
+
+#### Conclusiones
+
