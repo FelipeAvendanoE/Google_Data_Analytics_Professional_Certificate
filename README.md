@@ -22,3 +22,10 @@ Para revisar el análisis, favor acceder al archivo "Caso de Estudio Cyclistic.R
 
 #### Conclusiones
 
+Debido a que los miembros ocasionales presentan patrones de uso distintos a los de un miembro anual recomendamos tomar las siguientes medidas:
+
+* Implementar la campaña durante el verano
+* Enfocar la publicidad en las estaciones de mayor transito (Streeter Dr & Grand Ave, Millenium Park)
+* Concentrar los esfuerzos de la campaña de marketing es las horas con mayor transito (11:00 a 18:00)
+* Dar prioridad a los fines de semana e instalar puestos para inscribirse
+* Ofrecer beneficios o descuentos para viajes de mayor duración
