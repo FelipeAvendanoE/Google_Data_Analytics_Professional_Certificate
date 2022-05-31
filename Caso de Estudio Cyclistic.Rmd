@@ -1,0 +1,456 @@
+---
+title: "Google Data Analytics Professional Certificate"
+author: "Felipe Avendaño Espinoza"
+date: '2022-05-14'
+output: rmarkdown::github_document
+---
+
+## Proyecto final
+
+El proyecto consiste en analizar datos de los últimos 12 meses de una empresa de arriendo de bicicletas de Chicago.
+
+### Librerias
+
+En primer lugar, para poder analizar los datos debemos cargar las librerías.
+
+```{r warning=FALSE,echo=TRUE, results='hide'}
+library(tidyverse)
+library(lubridate)
+library(skimr)
+```
+
+### Carga de datos
+
+Se procede a realizar la carga de los doce archivos csv.
+
+```{r}
+divvy_202105 <- read.csv("202105-divvy-tripdata.csv")
+divvy_202106 <- read.csv("202106-divvy-tripdata.csv")
+divvy_202107 <- read.csv("202107-divvy-tripdata.csv")
+divvy_202108 <- read.csv("202108-divvy-tripdata.csv")
+divvy_202109 <- read.csv("202109-divvy-tripdata.csv")
+divvy_202110 <- read.csv("202110-divvy-tripdata.csv")
+divvy_202111 <- read.csv("202111-divvy-tripdata.csv")
+divvy_202112 <- read.csv("202112-divvy-tripdata.csv")
+divvy_202201 <- read.csv("202201-divvy-tripdata.csv")
+divvy_202202 <- read.csv("202202-divvy-tripdata.csv")
+divvy_202203 <- read.csv("202203-divvy-tripdata.csv")
+divvy_202204 <- read.csv("202204-divvy-tripdata.csv")
+```
+
+Una vez cargados se verifica que las columnas coincidan.
+
+```{r}
+colnames(divvy_202105)
+colnames(divvy_202106)
+```
+
+
+```{r echo=TRUE, results='hide'}
+colnames(divvy_202107)
+colnames(divvy_202108)
+colnames(divvy_202109)
+colnames(divvy_202110)
+colnames(divvy_202111)
+colnames(divvy_202112)
+colnames(divvy_202201)
+colnames(divvy_202202)
+colnames(divvy_202203)
+colnames(divvy_202204)
+```
+
+Al verificar que cuentan con las mismas columnas, se procede a unir todos los dataframe.
+
+```{r}
+divvy <- bind_rows(divvy_202105, divvy_202106, divvy_202107, divvy_202108,
+                   divvy_202109, divvy_202110, divvy_202111, divvy_202112,
+                   divvy_202201, divvy_202202, divvy_202203, divvy_202204)
+```
+
+
+### Análisis y limpieza de datos
+
+Al contar con un único dataframe, se procede a obtener una visión general de los datos.
+
+```{r}
+summary(divvy)
+```
+
+Se detecta en primera instancia datos que no poseen coordenadas, los cuales son eliminados.
+
+```{r}
+divvy_clean <- drop_na(divvy, end_lat)
+```
+
+  A continuación, se obtiene otro resumen de los datos.
+
+```{r}
+skim_without_charts(divvy_clean)
+```
+
+En el cual podemos notar que tenemos tres tipos de bicicletas y dos tipos de miembros. A continuación, conoceremos los valores únicos de dichos campos.
+
+```{r}
+unique(divvy_clean$rideable_type)
+unique(divvy_clean$member_casual)
+```
+
+También es posible detectar que existe un número importante de observaciones sin datos para las estaciones de origen y destino. Se procede a aplicar distintos filtros para conocer el alcance de la falta de datos.
+
+En primer lugar, identificamos aquellas observaciones que no posean nombres ni id en las estaciones de inicio y fin.
+
+```{r}
+nrow(divvy_clean %>%
+  filter(nchar(divvy_clean$start_station_name) == 0,
+         nchar(divvy_clean$start_station_id) == 0,
+         nchar(divvy_clean$end_station_name) == 0,
+         nchar(divvy_clean$end_station_name) == 0
+         ))
+```
+
+En segundo lugar, identificaremos aquellas que no posean al menos uno de esos cuatro datos.
+
+```{r}
+nrow(divvy_clean %>%
+       filter(nchar(divvy_clean$start_station_name) == 0 |
+              nchar(divvy_clean$start_station_id) == 0 |
+              nchar(divvy_clean$end_station_name) == 0 |
+              nchar(divvy_clean$end_station_name) == 0
+       ))
+```
+
+En tercer lugar, aquellas que no posean datos para las estaciones de inicio.
+
+```{r}
+nrow(divvy_clean %>%
+       filter(nchar(divvy_clean$start_station_name) == 0,
+              nchar(divvy_clean$start_station_id) == 0
+       ))
+```
+
+Por último, aquellas que no posean datos para las estaciones de fin.
+
+```{r}
+nrow(divvy_clean %>%
+       filter(nchar(divvy_clean$end_station_name) == 0,
+              nchar(divvy_clean$end_station_name) == 0
+       ))
+```
+
+
+Es necesario investigar la razón de la falta de datos, ya que representa aproximadamente un quinto de los datos. De momento se conservarán los datos, sin embargo al momento de analizar la popularidad de las estaciones entre los usuarios es importante tener en cuenta las limitaciones del análisis.
+
+A continuación, se transformaran las variables de fecha y hora al formato adecuado, además de calcular columnas de apoyo y renombrar las categorías de usuario.
+
+```{r}
+divvy_clean <- divvy_clean %>%
+  mutate(start_date = ymd_hms(started_at),
+         end_date = ymd_hms(ended_at),
+         duration_min = as.numeric((end_date - start_date)/60),
+         year = year(start_date),
+         month = month(start_date, label = TRUE),
+         week_day = wday(start_date, label = TRUE, week_start = 1, abbr = FALSE),
+         hour = hour(start_date),
+         member_casual = recode(member_casual, "member" = "anual",
+                                "casual" = "ocasional")
+        )
+```
+
+
+Es momento de analizar las duraciones de los viajes, para ello nuevamente obtendremos un resumen de nuestro dataframe.
+
+```{r}
+summary(divvy_clean)
+```
+
+Aquí podemos observar duraciones negativas y otras muy grandes. Se eliminaran aquellas observaciones con duraciones negativas y aquellas que sean mayores a 24 horas.
+
+
+```{r}
+divvy_clean <- divvy_clean[divvy_clean$duration > 0,]
+
+divvy_clean <- divvy_clean[divvy_clean$duration < 1440,]
+```
+
+Ahora calcularemos el promedio, la mediana, el máximo y el mínimo para la duración de los viajes, además de la cantidad de viajes por día y por tipo de miembro.
+
+En primer lugar, se agrupa según el día de la semana.
+
+```{r}
+divvy_clean %>%
+  group_by(week_day) %>%
+  summarise(mean = mean(duration_min), median = median(duration_min), 
+            max = max(duration_min), min = min(duration_min), n = n())
+```
+Se observan claras diferencias según el día de la semana, donde durante los días sábado y domingo existen una mayor cantidad de viajes y tienen en promedio una mayor duración. En segundo lugar, se agrupa según el tipo de usuario.
+
+```{r}
+divvy_clean %>%
+  group_by(member_casual) %>%
+  summarise(mean = mean(duration_min), median = median(duration_min), 
+            max = max(duration_min), min = min(duration_min), n = n())
+```
+
+Notamos que los miembros ocasionales presentan una menor cantidad de viajes, sin embargo, sus viajes son de mayor duración. En tercer lugar, se agrupa tanto según día de la semana como tipo de usuario.
+
+```{r}
+divvy_clean %>%
+  group_by(week_day, member_casual) %>%
+  summarise(mean = mean(duration_min), median = median(duration_min), 
+            max = max(duration_min), min = min(duration_min), n = n())
+```
+
+Es posible observar el efecto tanto del día de la semana como del tipo de miembro, se mantiene una diferencia significativa en las duraciones de los viajes y se nota un peak para los miembros anuales durante el día miércoles, mientras que el día con la menor cantidad de viajes para este grupo corresponde al domingo.
+
+En esta sección, se presentará el top 10 de las estaciones, tanto para iniciar un viaje como para su fin.
+
+En primer lugar, observamos las estaciones de inicio más populares, es decir, con mayor cantidad de viajes iniciados.
+
+```{r message=FALSE, warning=FALSE}
+estaciones_inicio <- divvy_clean %>%
+  filter(start_station_name != "") %>%
+  group_by(member_casual, start_station_name) %>%
+  summarise(n_viajes = n()) %>%
+  arrange(desc(n_viajes))
+
+head(estaciones_inicio)
+```
+
+A continuación, se observan las estaciones de fin más populares.
+
+```{r message=FALSE, warning=FALSE}
+estaciones_fin <- divvy_clean %>%
+  filter(end_station_name != "") %>%
+  group_by(member_casual, end_station_name) %>%
+  summarise(n_viajes = n()) %>%
+  arrange(desc(n_viajes))
+
+head(estaciones_fin)
+```
+
+
+### Gráficos
+
+En esta sección se observaran distintos gráficos que nos permitirán comparar ambos tipos de usuario de acuerdo a distintos criterios.
+
+En primer lugar observaremos gráficos con datos agrupados según el mes en el cual se realizaba el viaje.
+
+El primer gráfico consiste en la cantidad de viajes realizados en cada mes según el tipo de usuario.
+
+```{r}
+ggplot(data = divvy_clean) + 
+  geom_bar(mapping = aes(x = month, fill = member_casual),
+           position = "dodge" ) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Viajes por mes y usuario",
+       subtitle = "Número de viajes por mes y por tipo de usuario",
+       x = "Mes",
+       y = "Número de viajes",
+       fill="Tipo de miembro"
+       )
+```
+
+Se observa que tanto para los miembros anuales como los ocasionales existe una clara disminución en la cantidad de viajes realizados durante los meses de enero y febrero, los cuales a partir de marzo van en aumento hasta alcanzar un máximo en los meses de julio y agosto.
+
+El segundo gráfico corresponde a la duración promedio de los viajes realizados según tipo de usuario.
+
+```{r}
+ggplot(data = divvy_clean) + 
+  geom_bar(mapping = aes(x = month, y = duration_min, fill = member_casual),
+           stat = "summary", fun = "mean", position = "dodge" ) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Duración promedio de Viajes por mes y usuario",
+       subtitle = "Duración promedio de viajes por mes y por tipo de usuario",
+       x = "Mes",
+       y = "Duración promedio del viaje (min)",
+       fill="Tipo de miembro"
+  )
+```
+
+En el caso de los miembros anuales la duración de sus viajes tiende a permanecer acotada en un rango de 10 a 15 minutos, sufriendo leves variaciones a lo largo de los meses. Por otro lado, para los miembros ocasionales la duración de los viajes presenta mayores cambios. El mínimo se da en enero, mientras que el máximo se alcanza en mayo.
+
+El tercer gráfico corresponde al tiempo total de los viajes realizados dentro de un mes según el tipo de usuario.
+
+```{r}
+ggplot(data = divvy_clean) + 
+  geom_bar(mapping = aes(x = month, y = duration_min, fill = member_casual),
+           stat = "summary", fun = "sum",position = "dodge" ) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Duración total de Viajes por mes y usuario",
+       subtitle = "Duración total de viajes por mes y por tipo de usuario",
+       x = "Mes",
+       y = "Duración total de viaje (min)",
+       fill="Tipo de miembro"
+  )
+```
+
+Es evidente que para ambos tipos de clientes los viajes se concentran en los meses de verano, alcanzando los mayores valores entre mayo a octubre.
+
+En segundo lugar, analizaremos gráficos con datos agrupados según el día de la semana.
+
+El primer gráfico consiste en la cantidad de viajes realizados en un día de la semana según el tipo de usuario.
+
+```{r}
+ggplot(data = divvy_clean) + 
+  geom_bar(mapping = aes(x = week_day, fill = member_casual),
+           position = "dodge" ) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Viajes por día y usuario",
+      subtitle = "Número de viajes por día y por tipo de usuario",
+      x = "Día de la semana",
+      y = "Número de viajes",
+      fill="Tipo de miembro"
+      )
+```
+
+Se nota que existe una clara diferencia entre los tipos de miembros, los ocasionales aumentan la cantidad de viajes durante el fin de semana mientras que los miembros anuales tienden a aumentar la cantidad de viajes en la mitad de la semana, presentando leves disminuciones durante el fin de semana.
+
+El segundo gráfico corresponde a la duración promedio de los viajes realizados en un día de la semana según el tipo de usuario.
+
+```{r}
+ggplot(data = divvy_clean) + 
+  geom_bar(mapping = aes(x = week_day, y = duration_min, fill = member_casual),
+           stat = "summary", fun = "mean", position = "dodge") +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Duración promedio de viajes por día y usuario",
+       subtitle = "Duración promedio de viajes por día y por tipo de usuario",
+       x = "Día de la semana",
+       y = "Duración promedio (min)",
+       fill="Tipo de miembro"
+  )
+```
+
+La duración promedio de los viajes para los miembros anuales se mantiene relativamente constante, independiente del día  de la semana, mientras que para los miembros ocasionales la duración presenta sus mayores valores los días sábado, domingo y lunes.
+
+El tercer gráfico corresponde a la duración total de los viajes realizados en un día de la semana según el tipo de usuario.
+
+```{r}
+ggplot(data = divvy_clean) + 
+  geom_bar(mapping = aes(x = week_day, y = duration_min, fill = member_casual),
+           stat = "summary", fun = "sum", position = "dodge") +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Duración total de Viajes por día y usuario",
+       subtitle = "Duración total de viajes por día y por tipo de usuario",
+       x = "Día de la semana",
+       y = "Duración total de viajes (min)",
+       fill="Tipo de miembro"
+  )
+```
+
+Se observa un claro aumento en la duración total de los viajes durante el fin de semana para los miembros ocasionales. Durante la semana la duración total permanece relativamente constante para ambos tipos de miembros.
+
+En tercer lugar, analizaremos gráficos con datos agrupados según la hora del día.
+
+El primer gráfico corresponde a la cantidad de viajes realizados en una hora en particular según el tipo de usuario.
+
+```{r}
+ggplot(data = divvy_clean) + 
+  geom_bar(mapping = aes(x = hour, fill = member_casual),
+           position = "dodge" ) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Viajes por hora y usuario",
+       subtitle = "Número de viajes por hora de inicio y por tipo de usuario",
+       x = "Hora del día",
+       y = "Número de viajes",
+       fill="Tipo de miembro"
+  )
+```
+
+Para los miembros ocasionales notamos un mínimo a las 04:00 horas y un máximo a las 17:00 horas, presentando transiciones suaves entre ambos puntos. Por otro lado, para los miembros anuales se detectan los mismos mínimos y máximos, sin embargo, la transición entre ambos puntos presenta un significativo aumento a las 07:00 y 08:00 horas.
+
+El segundo gráfico corresponde a la duración promedio de los viajes realizados en una hora en particular según el tipo de usuario.
+
+```{r}
+ggplot(data = divvy_clean) + 
+  geom_bar(mapping = aes(x = hour, y = duration_min, fill = member_casual),
+           stat = "summary", fun = "mean", position = "dodge" ) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Duración promedio de viajes por hora y usuario",
+       subtitle = "Duración promedio de viajes por hora y por tipo de usuario",
+       x = "Hora del día",
+       y = "Duración promedio (min)",
+       fill="Tipo de miembro"
+       )
+```
+
+Notamos que los miembros anuales presentan una duración promedio relativamente constante a lo largo del día, mientras que los miembros ocasionales presentan una disminución entre las 05:00 a 08:00 horas y un aumento entre las 10:00 a 15:00 horas.
+
+El tercer gráfico corresponde a la duración total de los viajes realizados en una hora en particular según el tipo de usuario.
+
+```{r}
+ggplot(data = divvy_clean) + 
+  geom_bar(mapping = aes(x = hour, y = duration_min, fill = member_casual),
+           stat = "summary", fun = "sum", position = "dodge" ) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Duración total de viajes por hora y usuario",
+       subtitle = "Duración total de viajes por hora y por tipo de usuario",
+       x = "Hora del día",
+       y = "Duración total (min)",
+       fill="Tipo de miembro"
+  )
+```
+
+Observamos que los miembros anuales solo superan a los ocasionales en la duración total de los viajes entre las 05:00 a las 08:00 horas. En todos los otros horarios son los miembros ocasionales quienes poseen una mayor duración total de sus viajes.
+
+En cuarto lugar, analizaremos un gráfico con datos agrupados según la duración del viaje.
+
+```{r}
+ggplot(data = divvy_clean) + 
+  geom_bar(mapping = aes(x = duration_min, fill = member_casual),
+           position = "dodge") +
+  coord_cartesian(xlim = c(0, 50)) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(title = "Viajes según su duración",
+       subtitle = "Cantidad de viajes por su duración y tipo de usuario",
+       x = "Duración (min)",
+       y = "Número de viajes",
+       fill="Tipo de miembro"
+       )
+```
+
+En este gráfico, podemos entender que los miembros anuales realizan una mayor cantidad de viajes con una duración menor, y a medida que aumenta la duración del viaje disminuye la cantidad de viajes realizados por este tipo de miembro. Por otro lado, los miembros ocasionales si bien de igual forma disminuyen la cantidad de viajes realizados según aumenta su duración, mantienen un nivel mayor.
+
+En último lugar, se analizarán gráficos con datos agrupados según las estaciones de inicio y fin.
+
+El primer gráfico corresponde a las 10 estaciones de inicio más populares.
+
+```{r}
+ggplot(data = estaciones_inicio[1:10, ]) + 
+  geom_col(mapping = aes(x = reorder(start_station_name, n_viajes), 
+                         y = n_viajes, fill = member_casual),
+           position = "dodge") +
+  coord_flip() +
+  labs(title = "Top 10 estaciones de inicio",
+       subtitle = "Estaciones de inicio más populares según tipo de usuario",
+       x = "Estación",
+       y = "Número de viajes",
+       fill="Tipo de miembro"
+       )
+```
+
+El segundo gráfico corresponde a las 10 estaciones de fin más populares.
+
+```{r}
+ggplot(data = estaciones_fin[1:10, ]) + 
+  geom_col(mapping = aes(x = reorder(end_station_name, n_viajes),
+                         y = n_viajes, fill = member_casual),
+           position = "dodge") +
+  coord_flip() +
+  labs(title = "Top 10 estaciones de fin",
+       subtitle = "Estaciones de fin más populares según tipo de usuario",
+       x = "Estación",
+       y = "Número de viajes",
+       fill="Tipo de miembro"
+       )
+
+```
+
+### Conclusiones
+
+Debido a que los miembros ocasionales presentan patrones de uso distintos a los de un miembro anual recomendamos tomar las siguientes medidas:
+
+* Implementar la campaña durante el verano
+* Enfocar la publicidad en las estaciones de mayor transito (Streeter Dr & Grand Ave, Millenium Park)
+* Concentrar los esfuerzos de la campaña de marketing es las horas con mayor transito (11:00 a 18:00)
+* Dar prioridad a los fines de semana e instalar puestos para inscribirse
+* Ofrecer beneficios o descuentos para viajes de mayor duración
