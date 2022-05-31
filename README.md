@@ -18,7 +18,7 @@ Formamos parte del equipo de marketing de Cyclistic, empresa ubicada en Chicago 
 
 #### Análisis
 
-Para revisar el análisis, favor acceder al archivo "Caso de Estudio Cyclistic.R"
+Para revisar el análisis, favor acceder al archivo "Caso de Estudio Cyclistic.Rmd"
 
 #### Conclusiones
 
